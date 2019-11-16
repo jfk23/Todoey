@@ -11,10 +11,14 @@ import UIKit
 class TodoListViewController: UITableViewController {
     
     var itemArray = ["Monday", "Tuesday", "Wednesday"]
+    let defaults = UserDefaults.standard
 
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        if let items = defaults.array(forKey: "TodoArray") as? [String] {
+            itemArray = items
+        }
         
     }
 
@@ -55,6 +59,7 @@ class TodoListViewController: UITableViewController {
                 for item in alert.textFields! {
                     print (item.text!)
                     self.itemArray.append(item.text!)
+                    self.defaults.set(self.itemArray, forKey: "TodoArray")
                     self.tableView.reloadData()
                 }
             }
