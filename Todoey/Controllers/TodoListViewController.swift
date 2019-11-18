@@ -8,15 +8,30 @@
 
 import UIKit
 
+
 class TodoListViewController: UITableViewController {
     
-    var itemArray = ["Monday", "Tuesday", "Wednesday"]
+    var itemArray = [Item]()
     let defaults = UserDefaults.standard
 
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        if let items = defaults.array(forKey: "TodoArray") as? [String] {
+        
+        let newItem = Item()
+        newItem.title = "Monday"
+        itemArray.append(newItem)
+        
+        let newItem2 = Item()
+        newItem2.title = "Tuesday"
+        itemArray.append(newItem2)
+        
+        let newItem3 = Item()
+        newItem3.title = "Wednesday"
+        itemArray.append(newItem3)
+        
+        
+        if let items = defaults.array(forKey: "TodoArray") as? [Item] {
             itemArray = items
         }
         
@@ -29,8 +44,10 @@ class TodoListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
         
-        let message = itemArray[indexPath.row]
+        let message = itemArray[indexPath.row].title
         cell.textLabel?.text = message
+        
+        cell.accessoryType = itemArray[indexPath.row].done ? .checkmark : .none
         
         return cell
     }
@@ -39,14 +56,11 @@ class TodoListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         print ("cell \(indexPath.row): \(itemArray[indexPath.row])")
         
-        
-        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-        } else {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-        }
+        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
         tableView.deselectRow(at: indexPath, animated: true)
+        
+        tableView.reloadData()
     }
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -58,7 +72,10 @@ class TodoListViewController: UITableViewController {
             if alert.textFields != nil {
                 for item in alert.textFields! {
                     print (item.text!)
-                    self.itemArray.append(item.text!)
+                    
+                    let newEntry = Item()
+                    newEntry.title = item.text!
+                    self.itemArray.append(newEntry)
                     self.defaults.set(self.itemArray, forKey: "TodoArray")
                     self.tableView.reloadData()
                 }
