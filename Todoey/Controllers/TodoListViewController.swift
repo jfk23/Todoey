@@ -12,29 +12,17 @@ import UIKit
 class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
-    let defaults = UserDefaults.standard
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    
+    //let defaults = UserDefaults.standard
 
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let newItem = Item()
-        newItem.title = "Monday"
-        itemArray.append(newItem)
+        //print (dataFilePath)
         
-        let newItem2 = Item()
-        newItem2.title = "Tuesday"
-        itemArray.append(newItem2)
-        
-        let newItem3 = Item()
-        newItem3.title = "Wednesday"
-        itemArray.append(newItem3)
-        
-        
-        if let items = defaults.array(forKey: "TodoArray") as? [Item] {
-            itemArray = items
-        }
-        
+        loadItem()
     }
 
     //MARK: - Tableview Datasource method
@@ -60,12 +48,11 @@ class TodoListViewController: UITableViewController {
         
         tableView.deselectRow(at: indexPath, animated: true)
         
-        tableView.reloadData()
+        saveItem()
     }
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         let alert = UIAlertController(title: "Add New Item", message: "", preferredStyle: .alert)
-        
         let action = UIAlertAction(title: "Add item", style: .default) { (action) in
             
             print ("Success")
@@ -76,21 +63,41 @@ class TodoListViewController: UITableViewController {
                     let newEntry = Item()
                     newEntry.title = item.text!
                     self.itemArray.append(newEntry)
-                    self.defaults.set(self.itemArray, forKey: "TodoArray")
-                    self.tableView.reloadData()
+                    //self.defaults.set(self.itemArray, forKey: "TodoArray")
+                    
+                    self.saveItem()
                 }
             }
-            
         }
-        
         alert.addTextField { (alertTextField) in
             alertTextField.placeholder = "Create new item"
             print("alert pop-up!")
         }
-        
-        
         alert.addAction(action)
         self.present(alert, animated: true, completion: nil)
+    }
+    
+    func saveItem() {
+        let encoder = PropertyListEncoder()
+        
+        do {
+            let data = try encoder.encode(itemArray)
+            try data.write(to:dataFilePath!)
+        } catch {
+            print ("Error encoding tiem array, \(error)")
+        }
+        self.tableView.reloadData()
+    }
+    
+    func loadItem() {
+        do {
+            let data = try Data(contentsOf: dataFilePath!)
+            let decoder = PropertyListDecoder()
+            itemArray = try decoder.decode([Item].self, from: data)
+        
+        } catch {
+            print ("error in decoding from data: \(error)")
+        }
     }
 }
 
