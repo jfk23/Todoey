@@ -8,12 +8,13 @@
 
 import UIKit
 import CoreData
+import RealmSwift
 
 class CategoryViewController: UITableViewController {
     
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    let realm = try! Realm()
     
-    var catArray = [Category]()
+    var catArray: Results<Category>?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,13 +25,13 @@ class CategoryViewController: UITableViewController {
     // MARK: - Table view data source
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return catArray.count
+        return catArray?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
         
-        let message = catArray[indexPath.row].name
+        let message = catArray?[indexPath.row].name ?? "No Category added yet"
         cell.textLabel?.text = message
         
         return cell
@@ -39,9 +40,11 @@ class CategoryViewController: UITableViewController {
     
     //MARK: - data manipulation methods
     
-    func saveItem() {
+    func save(category: Category) {
           do{
-              try context.save()
+            try realm.write {
+                realm.add(category)
+            }
           } catch {
               print("error occurs when saving: \(error)")
           }
@@ -49,12 +52,9 @@ class CategoryViewController: UITableViewController {
       }
       
       func loadCategory() {
-          let request: NSFetchRequest<Category> = Category.fetchRequest()
-          do{
-              try catArray = context.fetch(request)
-          } catch {
-              print("error occurs when reading data: \(error)")
-          }
+        
+        catArray = realm.objects(Category.self)
+        
           tableView.reloadData()
       }
    
@@ -78,11 +78,10 @@ class CategoryViewController: UITableViewController {
         let action = UIAlertAction(title: "Save", style: .default) { (alertaction) in
             if alert.textFields != nil {
                 for item in alert.textFields! {
-                    let newCategory = Category(context: self.context)
+                    let newCategory = Category()
                     newCategory.name = item.text!
-                    self.catArray.append(newCategory)
                     
-                    self.saveItem()
+                    self.save(category:newCategory)
                 }
             }
         }
@@ -100,7 +99,7 @@ class CategoryViewController: UITableViewController {
      //MARK: - Tableview Delegate methods
        
        override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-           print ("cell \(indexPath.row): \(catArray[indexPath.row])")
+           //print ("cell \(indexPath.row): \(catArray[indexPath.row])")
            //tableView.deselectRow(at: indexPath, animated: true)
         performSegue(withIdentifier: "goToItems", sender: self)
            
@@ -108,8 +107,8 @@ class CategoryViewController: UITableViewController {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let destinationVC = segue.destination as! TodoListViewController
         if let path = tableView.indexPathForSelectedRow {
-            destinationVC.selectedCategory = catArray[path.row]
-            print ("let's print selected cell: \(catArray[path.row])")
+            destinationVC.selectedCategory = catArray?[path.row]
+            print ("let's print selected cell: \(catArray?[path.row])")
         } else {
             print ("What's going on???")
         }
