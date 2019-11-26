@@ -82,6 +82,9 @@ class TodoListViewController: UITableViewController {
                     
                     let newItem = Item()
                     newItem.title = item.text!
+                    newItem.dateCreated = Date()
+                    //let date = NSDate()
+                    //newItem.dateCreated = date.timeIntervalSince1970
     
                     do{
                         try self.realm.write {
@@ -120,29 +123,32 @@ class TodoListViewController: UITableViewController {
 
 //MARK: - search bar delegate methods
 
-//extension TodoListViewController: UISearchBarDelegate {
-//
-//    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+extension TodoListViewController: UISearchBarDelegate {
+
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        
+        todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: false)
+        tableView.reloadData()
+        
 //        let request: NSFetchRequest<Item> = Item.fetchRequest()
 //        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
 //
 //        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
 //        loadItem(with: request)
-//
-//    }
-//
-//    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-//        if searchBar.text?.count == 0 {
-//            loadItem()
-//
-//
-//            DispatchQueue.main.async {
-//                searchBar.resignFirstResponder()
-//            }
-//        }
-//
-//
-//    }
-//
-//}
-//
+
+    }
+
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            loadItem()
+
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        }
+
+
+    }
+
+}
+
