@@ -8,9 +8,10 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeController {
     
     let realm = try! Realm()
     var todoItems: Results<Item>?
@@ -23,6 +24,8 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        
+        
         print (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
 
     }
@@ -32,10 +35,18 @@ class TodoListViewController: UITableViewController {
         todoItems?.count ?? 1
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
+        //let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+        
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let message = todoItems?[indexPath.row].title {
             cell.textLabel?.text = message
+            if let itemColor = UIColor(hexString: selectedCategory!.cellColor).darken(byPercentage: (CGFloat(indexPath.row)/CGFloat(todoItems!.count))) {
+            cell.backgroundColor = itemColor
+            cell.textLabel?.textColor = ContrastColorOf(backgroundColor: itemColor, returnFlat: true)
+            }
+            
+            
             
             cell.accessoryType = todoItems![indexPath.row].done ? .checkmark : .none
         } else {
@@ -116,8 +127,22 @@ class TodoListViewController: UITableViewController {
     
     func loadItem() {
         
-        todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
+        todoItems = selectedCategory?.items.sorted(byKeyPath: "dateCreated", ascending: false)
         tableView.reloadData()
+    }
+    
+    override func updateModel(at indexPath: IndexPath) {
+        if let deletedItem = todoItems?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    self.realm.delete(deletedItem)
+                    //self.tableView.reloadData()
+                }
+            } catch {
+                print ("error with deleting: \(error)")
+            }
+
+        }
     }
 }
 
